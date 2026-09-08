@@ -1189,21 +1189,26 @@ export default function ThreadTerminalDrawer({
       });
     }
 
-    let fillGroup = nextGroups.find(
-      (group) =>
-        group.id === activeTerminalGroupId && group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
-    );
+    const activeGroup = nextGroups.find((group) => group.id === activeTerminalGroupId) ?? null;
+    let fillGroup =
+      activeGroup && activeGroup.terminalIds.length < MAX_TERMINALS_PER_GROUP ? activeGroup : null;
+    const stackIntoNewGroups = activeGroup === null;
     for (const terminalId of normalizedTerminalIds) {
       if (assignedTerminalIds.has(terminalId)) continue;
-      if (!fillGroup || fillGroup.terminalIds.length >= MAX_TERMINALS_PER_GROUP) {
-        fillGroup = {
-          id: assignUniqueGroupId(`group-${terminalId}`),
-          terminalIds: [],
-        };
-        nextGroups.push(fillGroup);
+      if (fillGroup && fillGroup.terminalIds.length < MAX_TERMINALS_PER_GROUP) {
+        fillGroup.terminalIds.push(terminalId);
+        assignedTerminalIds.add(terminalId);
+        continue;
       }
-      fillGroup.terminalIds.push(terminalId);
+      fillGroup = {
+        id: assignUniqueGroupId(`group-${terminalId}`),
+        terminalIds: [terminalId],
+      };
+      nextGroups.push(fillGroup);
       assignedTerminalIds.add(terminalId);
+      if (!stackIntoNewGroups) {
+        fillGroup = null;
+      }
     }
 
     const terminalOrderIndex = new Map(

@@ -131,20 +131,26 @@ function normalizeTerminalGroups(
     });
   }
 
-  let fillGroup = nextGroups.find(
-    (group) => group.id === activeGroupId && group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
-  );
+  const activeGroup = nextGroups.find((group) => group.id === activeGroupId) ?? null;
+  let fillGroup =
+    activeGroup && activeGroup.terminalIds.length < MAX_TERMINALS_PER_GROUP ? activeGroup : null;
+  const stackIntoNewGroups = activeGroup === null;
   for (const terminalId of terminalIds) {
     if (assignedTerminalIds.has(terminalId)) continue;
-    if (!fillGroup || fillGroup.terminalIds.length >= MAX_TERMINALS_PER_GROUP) {
-      fillGroup = {
-        id: assignUniqueGroupId(fallbackGroupId(terminalId), usedGroupIds),
-        terminalIds: [],
-      };
-      nextGroups.push(fillGroup);
+    if (fillGroup && fillGroup.terminalIds.length < MAX_TERMINALS_PER_GROUP) {
+      fillGroup.terminalIds.push(terminalId);
+      assignedTerminalIds.add(terminalId);
+      continue;
     }
-    fillGroup.terminalIds.push(terminalId);
+    fillGroup = {
+      id: assignUniqueGroupId(fallbackGroupId(terminalId), usedGroupIds),
+      terminalIds: [terminalId],
+    };
+    nextGroups.push(fillGroup);
     assignedTerminalIds.add(terminalId);
+    if (!stackIntoNewGroups) {
+      fillGroup = null;
+    }
   }
 
   return nextGroups;

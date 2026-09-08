@@ -306,7 +306,8 @@ describe("terminalUiStateStore actions", () => {
         terminalIds: [DEFAULT_THREAD_TERMINAL_ID, "pane-2", "pane-3", "pane-4"],
       },
       { id: "group-other-tab", terminalIds: ["other-tab"] },
-      { id: "group-overflow-a", terminalIds: ["overflow-a", "overflow-b"] },
+      { id: "group-overflow-a", terminalIds: ["overflow-a"] },
+      { id: "group-overflow-b", terminalIds: ["overflow-b"] },
     ]);
   });
 
