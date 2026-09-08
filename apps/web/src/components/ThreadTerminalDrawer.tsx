@@ -1191,10 +1191,22 @@ export default function ThreadTerminalDrawer({
 
     for (const terminalId of normalizedTerminalIds) {
       if (assignedTerminalIds.has(terminalId)) continue;
+      const destinationGroup =
+        nextGroups.find(
+          (group) =>
+            group.id === activeTerminalGroupId &&
+            group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
+        ) ?? nextGroups.find((group) => group.terminalIds.length < MAX_TERMINALS_PER_GROUP);
+      if (destinationGroup) {
+        destinationGroup.terminalIds.push(terminalId);
+        assignedTerminalIds.add(terminalId);
+        continue;
+      }
       nextGroups.push({
         id: assignUniqueGroupId(`group-${terminalId}`),
         terminalIds: [terminalId],
       });
+      assignedTerminalIds.add(terminalId);
     }
 
     const terminalOrderIndex = new Map(
@@ -1207,7 +1219,7 @@ export default function ThreadTerminalDrawer({
     });
 
     return nextGroups;
-  }, [normalizedTerminalIds, terminalGroups]);
+  }, [activeTerminalGroupId, normalizedTerminalIds, terminalGroups]);
 
   const resolvedActiveGroupIndex = useMemo(() => {
     const indexById = resolvedTerminalGroups.findIndex(

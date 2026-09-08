@@ -1,5 +1,6 @@
 import { ProjectId } from "@t3tools/contracts";
 import {
+  projectScriptCommands,
   projectScriptRuntimeEnv,
   resolveProjectScripts,
   setupProjectScript,
@@ -173,22 +174,24 @@ export const make = Effect.gen(function* () {
             }),
         ),
       );
-    yield* terminalManager
-      .write({
-        threadId: input.threadId,
-        terminalId,
-        data: `${script.command}\r`,
-      })
-      .pipe(
-        Effect.mapError(
-          (cause) =>
-            new ProjectSetupScriptOperationError({
-              ...errorContext,
-              operation: "writeCommand",
-              cause,
-            }),
-        ),
-      );
+    for (const command of projectScriptCommands(script)) {
+      yield* terminalManager
+        .write({
+          threadId: input.threadId,
+          terminalId,
+          data: `${command}\r`,
+        })
+        .pipe(
+          Effect.mapError(
+            (cause) =>
+              new ProjectSetupScriptOperationError({
+                ...errorContext,
+                operation: "writeCommand",
+                cause,
+              }),
+          ),
+        );
+    }
 
     return {
       status: "started",

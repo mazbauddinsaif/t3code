@@ -99,6 +99,7 @@ function normalizeTerminalGroupIds(terminalIds: string[]): string[] {
 function normalizeTerminalGroups(
   terminalGroups: ThreadTerminalGroup[],
   terminalIds: string[],
+  activeGroupId = "",
 ): ThreadTerminalGroup[] {
   if (terminalIds.length === 0) {
     return [];
@@ -132,10 +133,20 @@ function normalizeTerminalGroups(
 
   for (const terminalId of terminalIds) {
     if (assignedTerminalIds.has(terminalId)) continue;
+    const destinationGroup =
+      nextGroups.find(
+        (group) => group.id === activeGroupId && group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
+      ) ?? nextGroups.find((group) => group.terminalIds.length < MAX_TERMINALS_PER_GROUP);
+    if (destinationGroup) {
+      destinationGroup.terminalIds.push(terminalId);
+      assignedTerminalIds.add(terminalId);
+      continue;
+    }
     nextGroups.push({
       id: assignUniqueGroupId(fallbackGroupId(terminalId), usedGroupIds),
       terminalIds: [terminalId],
     });
+    assignedTerminalIds.add(terminalId);
   }
 
   return nextGroups;
@@ -206,7 +217,11 @@ function normalizeThreadTerminalUiState(state: ThreadTerminalUiState): ThreadTer
   const activeTerminalId = nextTerminalIds.includes(state.activeTerminalId)
     ? state.activeTerminalId
     : (nextTerminalIds[0] ?? "");
-  const terminalGroups = normalizeTerminalGroups(state.terminalGroups, nextTerminalIds);
+  const terminalGroups = normalizeTerminalGroups(
+    state.terminalGroups,
+    nextTerminalIds,
+    state.activeTerminalGroupId,
+  );
   const activeGroupIdFromState = terminalGroups.some(
     (group) => group.id === state.activeTerminalGroupId,
   )
@@ -464,7 +479,11 @@ function reconcileThreadTerminalSessionIds(
     ? normalized.activeTerminalId
     : (nextIds[0] ?? "");
 
-  const terminalGroups = normalizeTerminalGroups(normalized.terminalGroups, nextIds);
+  const terminalGroups = normalizeTerminalGroups(
+    normalized.terminalGroups,
+    nextIds,
+    normalized.activeTerminalGroupId,
+  );
   const activeGroupIdFromTerminal =
     terminalGroups.find((group) => group.terminalIds.includes(nextActiveTerminalId))?.id ?? null;
 

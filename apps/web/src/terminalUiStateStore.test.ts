@@ -257,8 +257,24 @@ describe("terminalUiStateStore actions", () => {
     expect(terminalUiState.terminalIds).toEqual(["term-a", "term-b"]);
     expect(terminalUiState.activeTerminalId).toBe("term-a");
     expect(terminalUiState.terminalGroups).toEqual([
-      { id: "group-term-a", terminalIds: ["term-a"] },
-      { id: "group-term-b", terminalIds: ["term-b"] },
+      { id: "group-term-a", terminalIds: ["term-a", "term-b"] },
+    ]);
+  });
+
+  it("splits newly reconciled terminals into the active group", () => {
+    const store = useTerminalUiStateStore.getState();
+    store.setTerminalOpen(THREAD_REF, true);
+    store.reconcileTerminalIds(THREAD_REF, [DEFAULT_THREAD_TERMINAL_ID, "backend", "frontend"]);
+
+    const terminalUiState = selectThreadTerminalUiState(
+      useTerminalUiStateStore.getState().terminalUiStateByThreadKey,
+      THREAD_REF,
+    );
+    expect(terminalUiState.terminalGroups).toEqual([
+      {
+        id: `group-${DEFAULT_THREAD_TERMINAL_ID}`,
+        terminalIds: [DEFAULT_THREAD_TERMINAL_ID, "backend", "frontend"],
+      },
     ]);
   });
 
