@@ -131,21 +131,19 @@ function normalizeTerminalGroups(
     });
   }
 
+  let fillGroup = nextGroups.find(
+    (group) => group.id === activeGroupId && group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
+  );
   for (const terminalId of terminalIds) {
     if (assignedTerminalIds.has(terminalId)) continue;
-    const destinationGroup =
-      nextGroups.find(
-        (group) => group.id === activeGroupId && group.terminalIds.length < MAX_TERMINALS_PER_GROUP,
-      ) ?? nextGroups.find((group) => group.terminalIds.length < MAX_TERMINALS_PER_GROUP);
-    if (destinationGroup) {
-      destinationGroup.terminalIds.push(terminalId);
-      assignedTerminalIds.add(terminalId);
-      continue;
+    if (!fillGroup || fillGroup.terminalIds.length >= MAX_TERMINALS_PER_GROUP) {
+      fillGroup = {
+        id: assignUniqueGroupId(fallbackGroupId(terminalId), usedGroupIds),
+        terminalIds: [],
+      };
+      nextGroups.push(fillGroup);
     }
-    nextGroups.push({
-      id: assignUniqueGroupId(fallbackGroupId(terminalId), usedGroupIds),
-      terminalIds: [terminalId],
-    });
+    fillGroup.terminalIds.push(terminalId);
     assignedTerminalIds.add(terminalId);
   }
 

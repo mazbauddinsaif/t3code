@@ -278,6 +278,38 @@ describe("terminalUiStateStore actions", () => {
     ]);
   });
 
+  it("opens a new group when the active split group is already full", () => {
+    const store = useTerminalUiStateStore.getState();
+    store.setTerminalOpen(THREAD_REF, true);
+    store.splitTerminal(THREAD_REF, "pane-2");
+    store.splitTerminal(THREAD_REF, "pane-3");
+    store.splitTerminal(THREAD_REF, "pane-4");
+    store.newTerminal(THREAD_REF, "other-tab");
+    store.setActiveTerminal(THREAD_REF, DEFAULT_THREAD_TERMINAL_ID);
+    store.reconcileTerminalIds(THREAD_REF, [
+      DEFAULT_THREAD_TERMINAL_ID,
+      "pane-2",
+      "pane-3",
+      "pane-4",
+      "other-tab",
+      "overflow-a",
+      "overflow-b",
+    ]);
+
+    const terminalUiState = selectThreadTerminalUiState(
+      useTerminalUiStateStore.getState().terminalUiStateByThreadKey,
+      THREAD_REF,
+    );
+    expect(terminalUiState.terminalGroups).toEqual([
+      {
+        id: `group-${DEFAULT_THREAD_TERMINAL_ID}`,
+        terminalIds: [DEFAULT_THREAD_TERMINAL_ID, "pane-2", "pane-3", "pane-4"],
+      },
+      { id: "group-other-tab", terminalIds: ["other-tab"] },
+      { id: "group-overflow-a", terminalIds: ["overflow-a", "overflow-b"] },
+    ]);
+  });
+
   it("does not import a closed panel terminal from stale metadata", () => {
     const store = useTerminalUiStateStore.getState();
     store.newTerminal(THREAD_REF, "term-2");
